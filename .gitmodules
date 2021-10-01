@@ -1,0 +1,6 @@
+[submodule "lvgl"]
+	path = lvgl
+	url = https://github.com/freyc/lvgl.git
+[submodule "lv_drivers"]
+	path = lv_drivers
+	url = https://github.com/freyc/lv_drivers.git
