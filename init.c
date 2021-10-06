@@ -1,56 +1,21 @@
-//#include <SDL2/SDL.h>
-#include "lvgl/lvgl.h"
-//#include "lv_drivers/display/monitor.h"
-//#include "lv_drivers/indev/mouse.h"
-//#include "lv_drivers/indev/keyboard.h"
-//#include "lv_drivers/indev/mousewheel.h"
+#include "init.h"
 
+#if USE_SDL
 #include "lv_drivers/sdl/sdl.h"
+#elif USE_GTK
+#include "lv_drivers/gtkdrv/gtkdrv.h"
+#endif
 
-static void hal_init();
-
-int main() {
-    lv_init();
-
-    hal_init();
-    //sdl_init();
-
-    lv_obj_t * name =  lv_btn_create(lv_scr_act()); //  lv_label_create(lv_scr_act());
-    
-    lv_obj_t* lbl = lv_label_create(name); 
-    lv_label_set_text(lbl, "My Button");
-
-    lv_obj_align(name, LV_ALIGN_CENTER, 0, -40);
-
-     while(1) {
-    /* Periodically call the lv_task handler.
-     * It could be done in a timer interrupt or an OS task too.*/
-    lv_timer_handler();
-    usleep(5 * 1000);
-  }
-}
-
-#if 1
-
-#include "lv_drv_conf.h"
-/**
- * Initialize the Hardware Abstraction Layer (HAL) for the LVGL graphics
- * library
- */
+#if USE_SDL
 static void hal_init(void)
-{
-  /* Use the 'monitor' driver which creates window on PC's monitor to simulate a display*/
-  monitor_init();
-  /* Tick init.
-   * You have to call 'lv_tick_inc()' in periodically to inform LittelvGL about
-   * how much time were elapsed Create an SDL thread to do this*/
-  //SDL_CreateThread(tick_thread, "tick", NULL);
+{  
+  sdl_init();
 
   /*Create a display buffer*/
   static lv_disp_draw_buf_t disp_buf1;
-  static lv_color_t buf1_1[SDL_HOR_RES * 100];
-  static lv_color_t buf1_2[SDL_HOR_RES * 100];
-  lv_disp_draw_buf_init(&disp_buf1, buf1_1, buf1_2, SDL_HOR_RES * 100);
+  static lv_color_t buf1_1[SDL_HOR_RES * SDL_VER_RES];
+  static lv_color_t buf1_2[SDL_HOR_RES * SDL_VER_RES];
+  lv_disp_draw_buf_init(&disp_buf1, buf1_1, buf1_2, SDL_HOR_RES * SDL_VER_RES);
 
   /*Create a display*/
   static lv_disp_drv_t disp_drv;
@@ -60,6 +25,7 @@ static void hal_init(void)
   disp_drv.hor_res = SDL_HOR_RES;
   disp_drv.ver_res = SDL_VER_RES;
   disp_drv.antialiasing = 1;
+  disp_drv.full_refresh = 1;
 
   lv_disp_t * disp = lv_disp_drv_register(&disp_drv);
 
@@ -104,20 +70,8 @@ static void hal_init(void)
   //lv_img_set_src(cursor_obj, &mouse_cursor_icon);           /*Set the image source*/
   //lv_indev_set_cursor(mouse_indev, cursor_obj);             /*Connect the image  object to the driver*/
 }
-
 #endif
 
-#if 0
-
-static int tick_thread(void *data) {
-  (void)data;
-
-  while(1) {
-    SDL_Delay(5);
-    lv_tick_inc(5); /*Tell LittelvGL that 5 milliseconds were elapsed*/
-  }
-
-  return 0;
+void init_lvgl_hal() {
+    hal_init();
 }
-
-#endif
