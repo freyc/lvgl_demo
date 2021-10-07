@@ -6,6 +6,25 @@
 
 namespace lvgl {
 
+class timer {
+    lv_timer_t *_timer;
+
+    static void callback(lv_timer_t *tmr) {
+        auto self = reinterpret_cast<timer *>(tmr->user_data);
+        if (tmr->repeat_count == 0) {
+            // if repeat_count reaches 0 -> timer gets deleted
+            self->_timer = nullptr;
+        }
+    }
+
+  public:
+    timer() : _timer{lv_timer_create_basic()} {}
+
+    ~timer() { lv_timer_del(_timer); }
+};
+
+static inline void init() { lv_init(); }
+
 enum class state {
     def = 0,
     checked = 1,
