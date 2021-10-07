@@ -579,10 +579,17 @@ int main() {
     lvgl::drivers::static_buffer<800, 600> disp_buffer;
     dummy_display_driver<800, 600> disp_driver{disp_buffer};
 
-    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+    auto disp = disp_driver.get_display();
 
+    lvgl::theme theme{lv_palette_main(LV_PALETTE_BLUE),
+                      lv_palette_main(LV_PALETTE_RED), false, LV_FONT_DEFAULT};
+
+    disp.apply_theme(theme);
+
+    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+    //{
     my_screen scr;
-    lvgl::screen::load(scr);
+    lvgl::screen::load(scr, lvgl::screen::load_anim::over_top, 1000);
 
     lvgl::animation anim{
         [&scr](int32_t val) { scr.meter.set_indicator_value(scr.indic, val); }};
@@ -596,6 +603,7 @@ int main() {
 
     anim.set_repeat_delay(1000);
     anim.start();
+    //}
 
     while (1) {
         /* Periodically call the lv_task handler.

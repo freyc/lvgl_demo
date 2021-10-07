@@ -2,7 +2,11 @@
 
 #include <array>
 
-namespace lvgl::drivers {
+namespace lvgl {
+
+class theme;
+
+namespace drivers {
 
 template <typename Buffer> class draw_buffer {
   protected:
@@ -45,9 +49,13 @@ class static_buffer
 };
 
 class display {
+    friend class display_driver_base;
     lv_disp_t *_disp;
 
     display(lv_disp_t *disp) : _disp{disp} {}
+
+  public:
+    void apply_theme(lvgl::theme t) { lv_disp_set_theme(_disp, t._theme); }
 };
 
 template <typename T>
@@ -66,9 +74,12 @@ class display_driver_base {
         lv_disp_drv_init(&_driver);
         _driver.draw_buf = &buffer._draw_buffer;
     }
+
+  public:
+    display get_display() { return display{_disp}; }
 };
 
-template <typename T> class display_driver : protected display_driver_base {
+template <typename T> class display_driver : public display_driver_base {
 
     auto &get() { return *static_cast<T *>(this); }
 
@@ -107,4 +118,5 @@ template <typename T> class display_driver : protected display_driver_base {
     }
 };
 
-} // namespace lvgl::drivers
+} // namespace drivers
+} // namespace lvgl

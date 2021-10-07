@@ -6,6 +6,21 @@
 
 namespace lvgl {
 
+namespace drivers {
+class display;
+}
+
+class theme {
+    friend class drivers::display;
+    lv_theme_t *_theme;
+
+  public:
+    theme(lv_color_t color_primary, lv_color_t color_secondary, bool dark,
+          const lv_font_t *font)
+        : _theme{lv_theme_default_init(nullptr, color_primary, color_secondary,
+                                       dark, font)} {}
+};
+
 class timer {
     lv_timer_t *_timer;
 
@@ -121,6 +136,14 @@ class object {
         : _obj{ctor(parent ? parent->_obj : nullptr,
                     std::forward<Args>(args)...)} {}
 
+    object(object *parent)
+        : _obj{lv_obj_create(parent ? parent->_obj : nullptr)} {}
+
+    ~object() {
+        //
+        lv_obj_del(_obj);
+    }
+
     void set_width(lv_coord_t w) { lv_obj_set_width(_obj, w); }
     void set_height(lv_coord_t h) { lv_obj_set_height(_obj, h); }
     void set_size(lvgl::size s) { lv_obj_set_size(_obj, s.width, s.height); }
@@ -159,11 +182,33 @@ class screen : public object {
     screen(lv_obj_t *scr) : object{scr} {}
 
   public:
+    enum class load_anim {
+        none = LV_SCR_LOAD_ANIM_NONE,
+        over_left = LV_SCR_LOAD_ANIM_OVER_LEFT,
+        over_right = LV_SCR_LOAD_ANIM_OVER_RIGHT,
+        over_top = LV_SCR_LOAD_ANIM_OVER_TOP,
+        over_bottom = LV_SCR_LOAD_ANIM_OVER_BOTTOM,
+        move_left = LV_SCR_LOAD_ANIM_MOVE_LEFT,
+        move_right = LV_SCR_LOAD_ANIM_MOVE_RIGHT,
+        move_top = LV_SCR_LOAD_ANIM_MOVE_TOP,
+        move_bottom = LV_SCR_LOAD_ANIM_MOVE_BOTTOM,
+        fade_in = LV_SCR_LOAD_ANIM_FADE_ON
+    };
+    // LV_SCR_LOAD_ANIM_NONE,
+
+    // LV_SCR_LOAD_ANIM_FADE_ON,
+
     screen() : object{lv_obj_create, nullptr} {}
 
     static screen get_current() { return screen{lv_scr_act()}; }
 
     static void load(screen &s) { lv_scr_load(s.get_object()); }
+
+    static void load(screen &s, load_anim anim, uint32_t time,
+                     uint32_t delay = 0) {
+        lv_scr_load_anim(s.get_object(), static_cast<lv_scr_load_anim_t>(anim),
+                         time, delay, false);
+    }
 };
 
 class button : public object {
@@ -310,7 +355,8 @@ template <size_t N> class msg_box : private msg_box_base<N>, public object {
 
     // msg_box(object *parent, const char *title, const char *txt,
     //        const char *btn_texts[], bool add_close)
-    //    : object{lv_msgbox_create, parent, title, txt, btn_texts, add_close}
+    //    : object{lv_msgbox_create, parent, title, txt, btn_texts,
+    //    add_close}
     //    {}
 
 #if 1
@@ -424,6 +470,8 @@ class animation {
         // lv_anim.c:97)
         lv_anim_set_var(&_obj, &cb);
     }
+
+    ~animation() { lv_anim_del(_obj.var, _obj.exec_cb); }
 
     void set_range(int32_t from, int32_t to) {
         lv_anim_set_values(&_obj, from, to);
