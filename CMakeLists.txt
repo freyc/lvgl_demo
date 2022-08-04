@@ -4,8 +4,11 @@ set(CMAKE_CXX_STANDARD 20)
 
 project(lvgl_demo C CXX)
 
+cmake_policy(SET CMP0077 NEW)
+
 #include_directories(${CMAKE_SOURCE_DIR})
 set(LVGL_CONFIG_DIR ${CMAKE_SOURCE_DIR}/config)
+set(LV_CONF_PATH ${CMAKE_SOURCE_DIR}/config/lv_conf.h)
 
 
 add_subdirectory(lvgl)
