@@ -63,8 +63,8 @@ class display {
 };
 
 template <typename T>
-concept DisplayDriver = requires(T &o, const lv_area_t *area,
-                                 lv_color_t *color_p) {
+concept DisplayDriver = requires(T &o, const lvgl::area_t &area,
+                                 lvgl::color_t *color_p) {
     {o.flush_display(area, color_p)};
 };
 
@@ -96,7 +96,8 @@ template <typename T> class display_driver : public display_driver_base {
                       "display_driver<T> must be a standard-layout type");
         auto self = reinterpret_cast<display_driver<T> *>(disp_drv);
 #endif
-        self->get().flush_display(area, color_p);
+        self->get().flush_display(
+            lvgl::area_t{area->x1, area->y1, area->x2, area->y2}, color_p);
     }
 
   protected:

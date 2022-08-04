@@ -91,6 +91,17 @@ using color_t = lv_color_t;
 
 using coord_t = lv_coord_t;
 
+struct area_t {
+    coord_t x1;
+    coord_t y1;
+    coord_t x2;
+    coord_t y2;
+
+    auto get_width() const { return (coord_t)(x2 - x1 + 1); }
+
+    auto get_height() const { return (coord_t)(y2 - y1 + 1); }
+};
+
 static inline constexpr color_t make_color(uint8_t r, uint8_t g, uint8_t b) {
     return LV_COLOR_MAKE(r, g, b);
 }
@@ -454,6 +465,19 @@ class slider : public object {
     void set_value(int32_t value) {
         lv_slider_set_value(get_object(), value, LV_ANIM_OFF);
     }
+};
+
+class spinbox : public object {
+  public:
+    spinbox(object *parent) : object{lv_spinbox_create, parent} {}
+
+    auto get_value() const { lv_spinbox_get_value(get_object()); }
+
+    void set_value(int32_t value) { lv_spinbox_set_value(get_object(), value); }
+
+    void increment() { lv_spinbox_increment(get_object()); }
+
+    void decrement() { lv_spinbox_decrement(get_object()); }
 };
 
 class meter : public object {

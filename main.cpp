@@ -509,14 +509,14 @@ class dummy_display_driver : public lvgl::drivers::display_driver<
         }
     }
 
-    void flush_display(const lv_area_t *area, lv_color_t *color_p) {
+    void flush_display(const lvgl::area_t &area, lvgl::color_t *color_p) {
 
         lv_coord_t hres = Hor;
         lv_coord_t vres = Ver;
 
         /*Return if the area is out the screen*/
-        if (area->x2 < 0 || area->y2 < 0 || area->x1 > hres - 1 ||
-            area->y1 > vres - 1) {
+        if (area.x2 < 0 || area.y2 < 0 || area.x1 > hres - 1 ||
+            area.y1 > vres - 1) {
             this->flush_ready();
             // flush_ready();
             // lv_disp_flush_ready(disp_drv);
@@ -524,9 +524,9 @@ class dummy_display_driver : public lvgl::drivers::display_driver<
         }
 
         int32_t y;
-        uint32_t w = lv_area_get_width(area);
-        for (y = area->y1; y <= area->y2 && y < Ver; y++) {
-            memcpy(&monitor.tft_fb[y * Hor + area->x1], color_p,
+        uint32_t w = area.get_width();
+        for (y = area.y1; y <= area.y2 && y < Ver; y++) {
+            memcpy(&monitor.tft_fb[y * Hor + area.x1], color_p,
                    w * sizeof(lv_color_t));
             color_p += w;
         }
@@ -693,6 +693,7 @@ class demo_screen : public lvgl::screen,
 
     lvgl::checkbox chkbox{this};
     lvgl::lv_switch sw{this};
+    lvgl::spinbox sb{this};
 
     demo_screen() : lvgl::screen{} {
 
