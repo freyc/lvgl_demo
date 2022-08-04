@@ -684,9 +684,7 @@ struct S {
 };
 #endif
 
-class demo_screen : public lvgl::screen,
-                    public lvgl::click_handler,
-                    public lvgl::event_handler {
+class demo_screen : public lvgl::screen, public lvgl::event_handler {
   public:
     lvgl::button btn{this};
     lvgl::label lbl{&btn};
@@ -695,11 +693,16 @@ class demo_screen : public lvgl::screen,
     lvgl::lv_switch sw{this};
     lvgl::spinbox sb{this};
 
+    lvgl::group grp;
+
     demo_screen() : lvgl::screen{} {
 
         static lvgl::style btn_style;
 
         const void *p = nullptr;
+
+        grp.add_object(sb);
+        grp.add_object(btn);
 
         // lvgl::style::prop_value val{lv_color_black()};
         // lvgl::style::prop_value val{1u};
@@ -729,15 +732,6 @@ class demo_screen : public lvgl::screen,
             lbl.set_text("click");
         }
     }
-
-    void on_object_clicked(object &sender) override {
-        //
-        if (sender == btn) {
-            printf("button\n");
-            lbl.set_text("click");
-        }
-        printf("click\n");
-    }
 };
 
 int main() {
@@ -760,6 +754,9 @@ int main() {
     lv_obj_add_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
 
     demo_screen scr;
+
+    disp_driver.set_group(scr.grp);
+
     lvgl::screen::load(scr, lvgl::screen::load_anim::none, 1000);
 
 #if 0

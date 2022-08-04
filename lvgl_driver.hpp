@@ -2,13 +2,22 @@
 
 #include "lvgl.h"
 
-namespace lvgl::drivers {
+namespace lvgl {
+
+class group;
+
+namespace drivers {
 
 class input_driver_base {
   protected:
     friend class group;
     lv_indev_drv_t _driver;
     lv_indev_t *_dev;
+};
+
+class keyboard_input_driver_base : public input_driver_base {
+  public:
+    void set_group(const lvgl::group &g) { lv_indev_set_group(_dev, g._obj); }
 };
 
 template <typename T> class input_pointer_driver : public input_driver_base {
@@ -41,7 +50,8 @@ template <typename T> class input_pointer_driver : public input_driver_base {
     }
 };
 
-template <typename T> class input_keyboard_driver : public input_driver_base {
+template <typename T>
+class input_keyboard_driver : public keyboard_input_driver_base {
 
     auto &get() { return *static_cast<T *>(this); }
 
@@ -94,4 +104,5 @@ class group {
         lv_indev_set_group(drv._dev, _group);
     }
 };
-} // namespace lvgl::drivers
+} // namespace drivers
+} // namespace lvgl

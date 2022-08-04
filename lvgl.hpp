@@ -6,6 +6,10 @@
 
 namespace lvgl {
 
+namespace drivers {
+class keyboard_input_driver_base;
+}
+
 enum class event : int {
     LV_EVENT_ALL = 0,
 
@@ -281,6 +285,7 @@ class object {
 
   protected:
     friend class non_owning_wrapper<object>;
+    friend class group;
 
     object(lv_obj_t *obj) : _obj{obj} {}
 
@@ -379,6 +384,18 @@ class object {
     // void move_down() { lv_obj_move_down(_obj); }
 };
 
+class group {
+    friend class lvgl::drivers::keyboard_input_driver_base;
+    lv_group_t *_obj;
+
+  public:
+    group() : _obj{lv_group_create()} {}
+
+    ~group() { lv_group_del(_obj); }
+
+    void add_object(const object &o) { lv_group_add_obj(_obj, o._obj); }
+};
+
 class screen : public object {
 
   protected:
@@ -413,29 +430,10 @@ class screen : public object {
     }
 };
 
-class click_handler {
-  public:
-    virtual void on_object_clicked(object &sender) = 0;
-};
-
 class button : public object {
 
   public:
     button(object *parent) : object{lv_btn_create, parent} {}
-
-    void add_click_handler(click_handler *handler) {
-        lv_obj_add_event_cb(
-            get_object(),
-            [](lv_event_t *e) {
-                auto s = non_owning_wrapper<object>(e->target);
-                if (e->user_data) {
-                    auto handler =
-                        reinterpret_cast<click_handler *>(e->user_data);
-                    handler->on_object_clicked(s);
-                }
-            },
-            LV_EVENT_CLICKED, handler);
-    }
 };
 
 class label : public object {
