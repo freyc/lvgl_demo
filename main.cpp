@@ -85,6 +85,7 @@ class my_screen : public lvgl::screen {
     lvgl::button btn{this};
     lvgl::label lbl{&btn};
     lvgl::bar bar{this};
+    lvgl::slider slider{this};
 
     lvgl::meter meter{this};
     lvgl::meter::scale scale{meter.add_scale()};
@@ -115,6 +116,8 @@ class my_screen : public lvgl::screen {
 
         bar.set_pos(10, 10);
         bar.set_value(50);
+
+        slider.set_pos(10, 400);
 
         meter.set_pos(50, 50);
         meter.set_size(200, 200);
@@ -231,13 +234,13 @@ class sdl_input_handler {
     sdl_input_handler() : mouse_driver{last_mouse_data} {}
 };
 
-template <lv_coord_t Hor, lv_coord_t Ver>
-class dummy_display_driver
-    : public lvgl::drivers::display_driver<dummy_display_driver<Hor, Ver>>,
-      public lvgl::drivers::input_pointer_driver<
-          dummy_display_driver<Hor, Ver>>,
-      public lvgl::drivers::input_keyboard_driver<
-          dummy_display_driver<Hor, Ver>> {
+template <lv_coord_t Hor, lv_coord_t Ver, unsigned int Zoom = 100>
+class dummy_display_driver : public lvgl::drivers::display_driver<
+                                 dummy_display_driver<Hor, Ver, Zoom>>,
+                             public lvgl::drivers::input_pointer_driver<
+                                 dummy_display_driver<Hor, Ver, Zoom>>,
+                             public lvgl::drivers::input_keyboard_driver<
+                                 dummy_display_driver<Hor, Ver, Zoom>> {
 
     struct monitor_t {
         SDL_Window *window;
@@ -252,7 +255,7 @@ class dummy_display_driver
 
     static int quit_filter(void *userdata, SDL_Event *event) {
         auto self =
-            reinterpret_cast<dummy_display_driver<Hor, Ver> *>(userdata);
+            reinterpret_cast<dummy_display_driver<Hor, Ver, Zoom> *>(userdata);
 
         if (event->type == SDL_WINDOWEVENT) {
             if (event->window.event == SDL_WINDOWEVENT_CLOSE) {
@@ -271,7 +274,7 @@ class dummy_display_driver
 
         monitor.window = SDL_CreateWindow(
             "TFT Simulator", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            Hor * 1, Ver * 1,
+            Hor * Zoom / 100.0, Ver * Zoom / 100.0,
             flag); /*last param. SDL_WINDOW_BORDERLESS to hide borders*/
 
         monitor.renderer =
@@ -350,28 +353,28 @@ class dummy_display_driver
         case SDL_MOUSEBUTTONDOWN:
             if (event->button.button == SDL_BUTTON_LEFT) {
                 left_button_down = true;
-                last_x = event->motion.x / 1;
-                last_y = event->motion.y / 1;
+                last_x = event->motion.x / (Zoom / 100.0);
+                last_y = event->motion.y / (Zoom / 100.0);
             }
             break;
         case SDL_MOUSEMOTION:
-            last_x = event->motion.x / 1;
-            last_y = event->motion.y / 1;
+            last_x = event->motion.x / (Zoom / 100.0);
+            last_y = event->motion.y / (Zoom / 100.0);
             break;
 
         case SDL_FINGERUP:
             left_button_down = false;
-            last_x = Hor * event->tfinger.x / 1;
-            last_y = Ver * event->tfinger.y / 1;
+            last_x = Hor * event->tfinger.x / (Zoom / 100.0);
+            last_y = Ver * event->tfinger.y / (Zoom / 100.0);
             break;
         case SDL_FINGERDOWN:
             left_button_down = true;
-            last_x = Hor * event->tfinger.x / 1;
-            last_y = Ver * event->tfinger.y / 1;
+            last_x = Hor * event->tfinger.x / (Zoom / 100.0);
+            last_y = Ver * event->tfinger.y / (Zoom / 100.0);
             break;
         case SDL_FINGERMOTION:
-            last_x = Hor * event->tfinger.x / 1;
-            last_y = Ver * event->tfinger.y / 1;
+            last_x = Hor * event->tfinger.x / (Zoom / 100.0);
+            last_y = Ver * event->tfinger.y / (Zoom / 100.0);
             break;
         }
     }
@@ -437,8 +440,8 @@ class dummy_display_driver
 
     static void sdl_event_handler(lv_timer_t *t) {
         (void)t;
-        auto self =
-            reinterpret_cast<dummy_display_driver<Hor, Ver> *>(t->user_data);
+        auto self = reinterpret_cast<dummy_display_driver<Hor, Ver, Zoom> *>(
+            t->user_data);
 
         self->sdl_event_handler();
     }
@@ -457,9 +460,10 @@ class dummy_display_driver
   public:
     template <typename Buffer>
     dummy_display_driver(lvgl::drivers::draw_buffer<Buffer> &buffer)
-        : lvgl::drivers::display_driver<dummy_display_driver<Hor, Ver>>{buffer},
+        : lvgl::drivers::display_driver<
+              dummy_display_driver<Hor, Ver, Zoom>>{buffer},
           lvgl::drivers::input_pointer_driver<
-              dummy_display_driver<Hor, Ver>>{} {
+              dummy_display_driver<Hor, Ver, Zoom>>{} {
 
         /*Initialize the SDL*/
         SDL_Init(SDL_INIT_VIDEO);
@@ -569,6 +573,172 @@ class dummy_display_driver
     }
 };
 
+#if 0
+class base {
+    void *ptr;
+
+  protected:
+    base(void *p) : ptr(p) {}
+    void release() { ptr = nullptr; }
+
+  public:
+    base() : ptr{malloc(1024)} {}
+
+    ~base() {
+        if (ptr) {
+            printf("freeing in base\n");
+            free(ptr);
+        }
+    }
+
+    // base(const base &b) : ptr{b.ptr} {}
+};
+
+class derived : public base {
+
+  public:
+    derived() : base{} {}
+
+    ~derived() {}
+};
+
+template <typename T> class non_owning_wrapper : public T {
+
+  public:
+    template <typename... Args>
+    non_owning_wrapper(Args... args) : T{std::forward<Args>(args)...} {}
+
+    // non_owning_wrapper(const non_owning_wrapper &o) = default;
+    ~non_owning_wrapper() { this->release(); }
+
+    auto operator=(const T &o) {
+        T::operator=(o);
+        return *this;
+    }
+};
+
+struct c_obj {
+    int i;
+};
+
+struct c_obj *create_obj() {
+    return (struct c_obj *)malloc(sizeof(struct c_obj));
+}
+
+void del_obj(struct c_obj *o) { free(o); }
+
+static c_obj *current;
+struct c_obj *get_current() {
+    static c_obj _inst;
+    return &_inst;
+};
+
+class obj {
+    friend class non_owning_wrapper<obj>;
+
+    c_obj *o;
+
+    obj(c_obj *i) : o{i} {}
+
+  protected:
+    void release() { o = nullptr; }
+
+  public:
+    obj() : o{create_obj()} {}
+    ~obj() {
+        if (o)
+            del_obj(o);
+    }
+
+    obj(obj &&o) {
+        using std::swap;
+        swap(this->o, o.o);
+    }
+
+    obj &operator=(obj &&o) {
+        using std::swap;
+        swap(this->o, o.o);
+        return *this;
+    }
+
+    static auto get_current() {
+        return non_owning_wrapper<obj>(::get_current());
+    }
+};
+
+template <typename T> struct store {
+    T val;
+    store(T value) : val{value} {}
+
+    void operator()() { val(); }
+};
+
+struct queue {
+    int count;
+    int element_size;
+    uint8_t buffer[];
+};
+
+struct S {
+    int &ref;
+};
+#endif
+
+class demo_screen : public lvgl::screen,
+                    public lvgl::click_handler,
+                    public lvgl::event_handler {
+  public:
+    lvgl::button btn{this};
+    lvgl::label lbl{&btn};
+
+    lvgl::checkbox chkbox{this};
+    lvgl::lv_switch sw{this};
+
+    demo_screen() : lvgl::screen{} {
+
+        static lvgl::style btn_style;
+
+        const void *p = nullptr;
+
+        // lvgl::style::prop_value val{lv_color_black()};
+        // lvgl::style::prop_value val{1u};
+        lvgl::style::prop_value val{p};
+
+        // btn_style.set_bg_color(lv_palette_main(LV_PALETTE_RED));
+        btn_style.set_property(LV_STYLE_BG_COLOR,
+                               lv_palette_main(LV_PALETTE_RED));
+        btn.add_style(btn_style, lvgl::state::pressed);
+
+        lbl.set_text("Hello world");
+        btn.align(lvgl::alignment::center);
+
+        chkbox.set_text("enable foo");
+        this->chkbox.set_pos(40, 500);
+
+        sw.set_pos(40, 550);
+
+        // btn.add_click_handler(this);
+        btn.add_event_handler(this, lvgl::event::LV_EVENT_CLICKED);
+    }
+
+    void on_event(object &sender, lvgl::event ev) override {
+        printf("event %d\n", static_cast<int>(ev));
+        if (sender == btn) {
+            printf("button click\n");
+            lbl.set_text("click");
+        }
+    }
+
+    void on_object_clicked(object &sender) override {
+        //
+        if (sender == btn) {
+            printf("button\n");
+            lbl.set_text("click");
+        }
+        printf("click\n");
+    }
+};
+
 int main() {
 
     // lv_init();
@@ -586,17 +756,34 @@ int main() {
 
     disp.apply_theme(theme);
 
-    lv_obj_clear_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(lv_scr_act(), LV_OBJ_FLAG_SCROLLABLE);
+
+    demo_screen scr;
+    lvgl::screen::load(scr, lvgl::screen::load_anim::none, 1000);
+
+#if 0
+    {
+        auto top = disp.get_top_layer();
+
+        auto top_label = new lvgl::label{&top};
+        top_label->set_text("I'm on top");
+        top_label->align(lvgl::alignment::center);
+        top_label->move_background();
+
+        // lvgl::label top_label{&top};
+        // top_label.set_text("I'm on top");
+    }
+
     //{
     my_screen scr;
-    lvgl::screen::load(scr, lvgl::screen::load_anim::over_top, 1000);
+    lvgl::screen::load(scr, lvgl::screen::load_anim::none, 1000);
 
     lvgl::animation anim{
         [&scr](int32_t val) { scr.meter.set_indicator_value(scr.indic, val); }};
 
     anim.set_range(0, 100);
     anim.set_time(5000);
-    anim.set_repeat(0xffff);
+    anim.set_repeat(lvgl::animation::repeat_indef);
 
     anim.set_playback_delay(1000);
     anim.set_playback_time(1000);
@@ -604,6 +791,7 @@ int main() {
     anim.set_repeat_delay(1000);
     anim.start();
     //}
+#endif
 
     while (1) {
         /* Periodically call the lv_task handler.

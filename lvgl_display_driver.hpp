@@ -56,6 +56,10 @@ class display {
 
   public:
     void apply_theme(lvgl::theme t) { lv_disp_set_theme(_disp, t._theme); }
+
+    auto get_top_layer() { return non_owning_wrapper<object>{lv_layer_top()}; }
+
+    auto get_sys_layer() { return non_owning_wrapper<object>{lv_layer_sys()}; }
 };
 
 template <typename T>

@@ -6,6 +6,95 @@
 
 namespace lvgl {
 
+enum class event : int {
+    LV_EVENT_ALL = 0,
+
+    /** Input device events*/
+    LV_EVENT_PRESSED,    /**< The object has been pressed*/
+    LV_EVENT_PRESSING,   /**< The object is being pressed (called continuously
+                            while pressing)*/
+    LV_EVENT_PRESS_LOST, /**< The object is still being pressed but slid
+                            cursor/finger off of the object */
+    LV_EVENT_SHORT_CLICKED, /**< The object was pressed for a short period of
+                               time, then released it. Not called if scrolled.*/
+    LV_EVENT_LONG_PRESSED,  /**< Object has been pressed for at least
+                               `long_press_time`.  Not called if scrolled.*/
+    LV_EVENT_LONG_PRESSED_REPEAT, /**< Called after `long_press_time` in every
+                                     `long_press_repeat_time` ms.  Not called if
+                                     scrolled.*/
+    LV_EVENT_CLICKED, /**< Called on release if not scrolled (regardless to long
+                         press)*/
+    LV_EVENT_RELEASED,     /**< Called in every cases when the object has been
+                              released*/
+    LV_EVENT_SCROLL_BEGIN, /**< Scrolling begins*/
+    LV_EVENT_SCROLL_END,   /**< Scrolling ends*/
+    LV_EVENT_SCROLL,       /**< Scrolling*/
+    LV_EVENT_GESTURE,      /**< A gesture is detected. Get the gesture with
+                              `lv_indev_get_gesture_dir(lv_indev_get_act());` */
+    LV_EVENT_KEY,          /**< A key is sent to the object. Get the key with
+                              `lv_indev_get_key(lv_indev_get_act());`*/
+    LV_EVENT_FOCUSED,      /**< The object is focused*/
+    LV_EVENT_DEFOCUSED,    /**< The object is defocused*/
+    LV_EVENT_LEAVE,        /**< The object is defocused but still selected*/
+    LV_EVENT_HIT_TEST,     /**< Perform advanced hit-testing*/
+
+    /** Drawing events*/
+    LV_EVENT_COVER_CHECK, /**< Check if the object fully covers an area. The
+                             event parameter is `lv_cover_check_info_t *`.*/
+    LV_EVENT_REFR_EXT_DRAW_SIZE, /**< Get the required extra draw area around
+                                    the object (e.g. for shadow). The event
+                                    parameter is `lv_coord_t *` to store the
+                                    size.*/
+    LV_EVENT_DRAW_MAIN_BEGIN,    /**< Starting the main drawing phase*/
+    LV_EVENT_DRAW_MAIN,          /**< Perform the main drawing*/
+    LV_EVENT_DRAW_MAIN_END,      /**< Finishing the main drawing phase*/
+    LV_EVENT_DRAW_POST_BEGIN,    /**< Starting the post draw phase (when all
+                                    children are drawn)*/
+    LV_EVENT_DRAW_POST, /**< Perform the post draw phase (when all children are
+                           drawn)*/
+    LV_EVENT_DRAW_POST_END,   /**< Finishing the post draw phase (when all
+                                 children are drawn)*/
+    LV_EVENT_DRAW_PART_BEGIN, /**< Starting to draw a part. The event parameter
+                                 is `lv_obj_draw_dsc_t *`. */
+    LV_EVENT_DRAW_PART_END,   /**< Finishing to draw a part. The event parameter
+                                 is `lv_obj_draw_dsc_t *`. */
+
+    /** Special events*/
+    LV_EVENT_VALUE_CHANGED, /**< The object's value has changed (i.e. slider
+                               moved)*/
+    LV_EVENT_INSERT,  /**< A text is inserted to the object. The event data is
+                         `char *` being inserted.*/
+    LV_EVENT_REFRESH, /**< Notify the object to refresh something on it (for the
+                         user)*/
+    LV_EVENT_READY,   /**< A process has finished*/
+    LV_EVENT_CANCEL,  /**< A process has been cancelled */
+
+    /** Other events*/
+    LV_EVENT_DELETE,         /**< Object is being deleted*/
+    LV_EVENT_CHILD_CHANGED,  /**< Child was removed/added*/
+    LV_EVENT_SIZE_CHANGED,   /**< Object coordinates/size have changed*/
+    LV_EVENT_STYLE_CHANGED,  /**< Object's style has changed*/
+    LV_EVENT_LAYOUT_CHANGED, /**< The children position has changed due to a
+                                layout recalculation*/
+    LV_EVENT_GET_SELF_SIZE,  /**< Get the internal size of a widget*/
+
+    _LV_EVENT_LAST /** Number of default events*/
+};
+
+class object;
+class event_handler {
+  public:
+    virtual void on_event(object &sender, event ev) = 0;
+};
+
+using color_t = lv_color_t;
+
+using coord_t = lv_coord_t;
+
+static inline constexpr color_t make_color(uint8_t r, uint8_t g, uint8_t b) {
+    return LV_COLOR_MAKE(r, g, b);
+}
+
 namespace drivers {
 class display;
 }
@@ -39,6 +128,39 @@ class timer {
 };
 
 static inline void init() { lv_init(); }
+
+enum class flag : lv_obj_flag_t {
+
+    hidden = LV_OBJ_FLAG_HIDDEN,
+    clickable = LV_OBJ_FLAG_CLICKABLE,
+    focusable = LV_OBJ_FLAG_CLICK_FOCUSABLE,
+    checkable = LV_OBJ_FLAG_CHECKABLE,
+    scrollable = LV_OBJ_FLAG_SCROLLABLE,
+    scroll_elastic = LV_OBJ_FLAG_SCROLL_ELASTIC,
+    scroll_momentum = LV_OBJ_FLAG_SCROLL_MOMENTUM,
+    scroll_one = LV_OBJ_FLAG_SCROLL_ONE,
+    scroll_chain = LV_OBJ_FLAG_SCROLL_CHAIN,
+    scroll_on_focus = LV_OBJ_FLAG_SCROLL_ON_FOCUS,
+    snappable = LV_OBJ_FLAG_SNAPPABLE,
+    press_lock = LV_OBJ_FLAG_PRESS_LOCK,
+    event_bubble = LV_OBJ_FLAG_EVENT_BUBBLE,
+    gesture_bubble = LV_OBJ_FLAG_GESTURE_BUBBLE,
+    adv_hittest = LV_OBJ_FLAG_ADV_HITTEST,
+    ignore_layout = LV_OBJ_FLAG_IGNORE_LAYOUT,
+    floating = LV_OBJ_FLAG_FLOATING,
+
+    layout_1 = LV_OBJ_FLAG_LAYOUT_1,
+    layout_2 = LV_OBJ_FLAG_LAYOUT_2,
+
+    widget_1 = LV_OBJ_FLAG_WIDGET_1,
+    widget_2 = LV_OBJ_FLAG_WIDGET_2,
+
+    user_1 = LV_OBJ_FLAG_USER_1,
+    user_2 = LV_OBJ_FLAG_USER_2,
+    user_3 = LV_OBJ_FLAG_USER_3,
+    user_4 = LV_OBJ_FLAG_USER_4,
+
+}; // namespace lvgl
 
 enum class state {
     def = 0,
@@ -97,13 +219,13 @@ class style {
 };
 
 struct coord {
-    lv_coord_t x;
-    lv_coord_t y;
+    coord_t x;
+    coord_t y;
 };
 
 struct size {
-    lv_coord_t width;
-    lv_coord_t height;
+    coord_t width;
+    coord_t height;
 };
 
 enum class alignment {
@@ -118,15 +240,44 @@ enum class alignment {
     bottom_right = LV_ALIGN_BOTTOM_RIGHT,
 };
 
+template <typename T> class non_owning_wrapper : public T {
+
+  public:
+    template <typename... Args>
+    non_owning_wrapper(Args... args) : T{std::forward<Args>(args)...} {}
+
+    // non_owning_wrapper(const non_owning_wrapper &o) = default;
+    ~non_owning_wrapper() { this->release(); }
+
+    auto operator=(const T &o) {
+        T::operator=(o);
+        return *this;
+    }
+};
+
+template <typename T> class owning_wrapper : public T {
+  public:
+    template <typename... Args>
+    owning_wrapper(Args... args) : T{std::forward<Args>(args)...} {}
+};
+
+/**
+ * @brief base-class for all lvgl-gui-objects.
+ *
+ */
 class object {
     lv_obj_t *_obj;
 
   protected:
+    friend class non_owning_wrapper<object>;
+
     object(lv_obj_t *obj) : _obj{obj} {}
 
     auto get_object() { return _obj; }
 
     auto get_object() const { return _obj; }
+
+    void release() { _obj = nullptr; }
 
     //~object() { lv_obj_del(_obj); }
 
@@ -140,28 +291,61 @@ class object {
         : _obj{lv_obj_create(parent ? parent->_obj : nullptr)} {}
 
     ~object() {
-        //
-        lv_obj_del(_obj);
+        // if constexpr (Owning)
+        if (_obj)
+            lv_obj_del(_obj);
     }
 
-    void set_width(lv_coord_t w) { lv_obj_set_width(_obj, w); }
-    void set_height(lv_coord_t h) { lv_obj_set_height(_obj, h); }
+    bool operator==(const object &other) const { return _obj == other._obj; }
+
+    auto get_parent() const {
+        return non_owning_wrapper<object>(lv_obj_get_parent(_obj));
+    }
+
+    void add_event_handler(event_handler *handler, event filter) {
+        lv_obj_add_event_cb(
+            _obj,
+            [](lv_event_t *ev) {
+                auto h = reinterpret_cast<event_handler *>(ev->user_data);
+                if (h) {
+                    auto sender = non_owning_wrapper<object>(ev->target);
+                    h->on_event(sender, static_cast<event>(ev->code));
+                }
+            },
+            static_cast<lv_event_code_t>(filter), handler);
+    }
+
+    /**
+     * @brief Defer deletion of the object
+     *
+     * After calling delete_later(), the object must not be used any longer by
+     * application-code, i.e. the user is not allowed to call any method of the
+     * object.
+     *
+     */
+    void delete_later() {
+        lv_obj_del_async(_obj);
+        release();
+    }
+
+    void set_width(coord_t w) { lv_obj_set_width(_obj, w); }
+    void set_height(coord_t h) { lv_obj_set_height(_obj, h); }
     void set_size(lvgl::size s) { lv_obj_set_size(_obj, s.width, s.height); }
-    void set_size(lv_coord_t width, lv_coord_t height) {
+    void set_size(coord_t width, lv_coord_t height) {
         lv_obj_set_size(_obj, width, height);
     }
 
-    void set_x(lv_coord_t x) { lv_obj_set_x(_obj, x); }
-    void set_y(lv_coord_t y) { lv_obj_set_y(_obj, y); }
+    void set_x(coord_t x) { lv_obj_set_x(_obj, x); }
+    void set_y(coord_t y) { lv_obj_set_y(_obj, y); }
     void set_pos(int x, int y) { lv_obj_set_pos(_obj, x, y); }
     void set_pos(coord pos) { lv_obj_set_pos(_obj, pos.x, pos.y); }
 
-    lv_coord_t get_x() const { return lv_obj_get_x(_obj); }
-    lv_coord_t get_y() const { return lv_obj_get_y(_obj); }
+    coord_t get_x() const { return lv_obj_get_x(_obj); }
+    coord_t get_y() const { return lv_obj_get_y(_obj); }
     coord get_pos() const { return {get_x(), get_y()}; }
 
-    lv_coord_t get_width() const { return lv_obj_get_width(_obj); }
-    lv_coord_t get_height() const { return lv_obj_get_height(_obj); }
+    coord_t get_width() const { return lv_obj_get_width(_obj); }
+    coord_t get_height() const { return lv_obj_get_height(_obj); }
     size get_size() const { return {get_width(), get_height()}; }
 
     void align(alignment a) {
@@ -175,10 +359,18 @@ class object {
     void add_style(style &s, state st = state::def) {
         lv_obj_add_style(_obj, &s._obj, static_cast<lv_style_selector_t>(st));
     }
+
+    void move_foreground() { lv_obj_move_foreground(_obj); }
+
+    void move_background() { lv_obj_move_background(_obj); }
+
+    // void move_up() { lv_obj_move_up(_obj); }
+    // void move_down() { lv_obj_move_down(_obj); }
 };
 
 class screen : public object {
 
+  protected:
     screen(lv_obj_t *scr) : object{scr} {}
 
   public:
@@ -194,13 +386,12 @@ class screen : public object {
         move_bottom = LV_SCR_LOAD_ANIM_MOVE_BOTTOM,
         fade_in = LV_SCR_LOAD_ANIM_FADE_ON
     };
-    // LV_SCR_LOAD_ANIM_NONE,
-
-    // LV_SCR_LOAD_ANIM_FADE_ON,
 
     screen() : object{lv_obj_create, nullptr} {}
 
-    static screen get_current() { return screen{lv_scr_act()}; }
+    static auto get_current() {
+        return non_owning_wrapper<screen>{lv_scr_act()};
+    }
 
     static void load(screen &s) { lv_scr_load(s.get_object()); }
 
@@ -211,10 +402,29 @@ class screen : public object {
     }
 };
 
+class click_handler {
+  public:
+    virtual void on_object_clicked(object &sender) = 0;
+};
+
 class button : public object {
 
   public:
     button(object *parent) : object{lv_btn_create, parent} {}
+
+    void add_click_handler(click_handler *handler) {
+        lv_obj_add_event_cb(
+            get_object(),
+            [](lv_event_t *e) {
+                auto s = non_owning_wrapper<object>(e->target);
+                if (e->user_data) {
+                    auto handler =
+                        reinterpret_cast<click_handler *>(e->user_data);
+                    handler->on_object_clicked(s);
+                }
+            },
+            LV_EVENT_CLICKED, handler);
+    }
 };
 
 class label : public object {
@@ -232,6 +442,17 @@ class bar : public object {
 
     void set_value(int32_t value) {
         lv_bar_set_value(get_object(), value, LV_ANIM_OFF);
+    }
+};
+
+class slider : public object {
+  public:
+    slider(object *parent) : object{lv_slider_create, parent} {}
+
+    auto get_value() const { lv_slider_get_value(get_object()); }
+
+    void set_value(int32_t value) {
+        lv_slider_set_value(get_object(), value, LV_ANIM_OFF);
     }
 };
 
@@ -457,6 +678,8 @@ class animation {
     callback_type cb;
 
   public:
+    static constexpr uint16_t repeat_indef = 0xffff;
+
     animation(std::function<void(int32_t)> fn) : cb{fn} {
         lv_anim_init(&_obj);
 

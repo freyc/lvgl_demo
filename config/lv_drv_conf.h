@@ -83,7 +83,7 @@
  *  Monitor of PC
  *-------------------*/
 #ifndef USE_SDL
-#  define USE_SDL         1
+#  define USE_SDL         0
 #endif
 
 #if USE_SDL
@@ -95,13 +95,13 @@
 
 /* Used to test true double buffering with only address changing.
  * Use 2 draw buffers, bith with MONITOR_HOR_RES x MONITOR_VER_RES size*/
-#  define MONITOR_DOUBLE_BUFFERED 0
+#  define MONITOR_DOUBLE_BUFFERED 1
 
 /*Eclipse: <SDL2/SDL.h>    Visual Studio: <SDL.h>*/
 #  define MONITOR_SDL_INCLUDE_PATH    <SDL2/SDL.h>
 
 /*Open two windows to test multi display support*/
-#  define MONITOR_DUAL            0
+#  define SDL_DUAL_DISPLAY            0
 #endif
 
 /*-----------------------------------
@@ -133,6 +133,11 @@
  *---------------------------------------*/
 #ifndef USE_GTK
 #  define USE_GTK       0
+#endif
+
+#ifdef USE_GTK
+#define LV_HOR_RES_MAX  800
+#define LV_VER_RES_MAX  600
 #endif
 
 /*----------------------------------------
